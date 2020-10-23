@@ -55,7 +55,7 @@ bot.request({
       })
       .then(parsed => {
         parsed.query.pages.forEach((revcon)=>{
-        var redirtitle = pagemembers[revcon.title].redirects[pagemembers[revcon.title].redirects.length].title.split(":")[1]
+        var redirtitle = pagemembers[revcon.title].redirects[pagemembers[revcon.title].redirects.length-1].title.split(":")[1]
         var locatestring = /{{Old peer review|archive = 1}}/
         var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle+"|archive = 1}}"
         var formtext = revcon.revisions[0].slots.main.content
