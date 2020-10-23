@@ -74,7 +74,7 @@ bot.request({
             console.log(data)
           })
           .catch((bbb)=>{
-            console.log(bbb)
+            console.log(bbb);
         
 
         });
