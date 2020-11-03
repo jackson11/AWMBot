@@ -31,19 +31,23 @@ bot.request({
 	"action": "query",
 	"list": "categorymembers",
   "cmtitle":"Category:Pages_using_Template:Old_peer_review_with_broken_archive_link",
-  "cmlimit": "1",
+  "cmlimit": "10",
 	"cmprop": "ids|title|type",
 }).then(data => {
+  console.log(pluck(data.query.categorymembers,"pageid"))
 	bot.request({
 	  "action": "query",
 	  "prop": "redirects",
     "rdlimit": "max",
     "pageids": pluck(data.query.categorymembers,"pageid"),
   })
-    .then(redirects => {
+    .then(function(redirects) {
+      var ids = []
 	    redirects.query.pages.forEach((iter)=>{
         if (iter.redirects){
           pagemembers[iter.title]=iter
+          ids.push(iter.pageid)
+          console.log(iter)
         }
       })
       bot.request({
@@ -51,33 +55,39 @@ bot.request({
         "prop": "revisions",
         "rvslots": "*",
         "rvprop": "content",
-        "pageids": pluck(data.query.categorymembers,"pageid"),
+        "pageids": ids
       })
-      .then(parsed => {
+      .then(parsed => {  
         parsed.query.pages.forEach((revcon)=>{
-        var redirtitle = pagemembers[revcon.title].redirects[pagemembers[revcon.title].redirects.length-1].title.split(":")[1]
-        var locatestring = /{{Old peer review|archive = 1}}/
-        var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle+"|archive = 1}}"
+        /*console.log(revcon)
+        var redirtitle = console.log(pagemembers)//.redirects[0]).title.split(":")[1]
+        console.log(revcon)
+        var locatestring2 = /{{Old peer review/
+        var locatestring = /{{oldpeerreview/
+        var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle
         var formtext = revcon.revisions[0].slots.main.content
-        var wikitext = formtext.replace(locatestring,replacestring)
+        
+        //console.log(wikitext,formtext)
         bot.edit(revcon.title, rev => {
           // rev.content gives the revision text
           // rev.timestamp gives the revision timestamp
-        
+          var wikitext = rev.content.replace(locatestring,replacestring).replace(locatestring2,replacestring)
+
           return {  // return parameters needed for [[mw:API:Edit]]
             text: wikitext,
-            summary: 'hopefully fixed incorrect revision',
-            minor: true
+            summary: 'Fixing broken old peer review link.',
+            minor: true,
+            bot: true
           }
         })
           .then((data)=>{
             console.log(data)
           })
           .catch((bbb)=>{
-            console.log(bbb);
+            console.log(bbb)
         
 
-        });
+        });*/
       })
       })
   });
