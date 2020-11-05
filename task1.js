@@ -34,7 +34,6 @@ bot.request({
   "cmlimit": "10",
 	"cmprop": "ids|title|type",
 }).then(data => {
-  console.log(pluck(data.query.categorymembers,"pageid"))
 	bot.request({
 	  "action": "query",
 	  "prop": "redirects",
@@ -42,14 +41,16 @@ bot.request({
     "pageids": pluck(data.query.categorymembers,"pageid"),
   })
     .then(function(redirects) {
+      var pgedit = []
       var ids = []
-	    redirects.query.pages.forEach((iter)=>{
-        if (iter.redirects){
+	    for(var i=0;i<redirects.query.pages.length;i++){
+        var iter = redirects.query.pages[i]
+        if (iter.redirects&&!(iter.title =="Template:Old peer review")&&!(iter.title=="Template:Old portal peer review")){
           pagemembers[iter.title]=iter
           ids.push(iter.pageid)
-          console.log(iter)
+          pgedit.push(iter)
         }
-      })
+      }
       bot.request({
         "action": "query",
         "prop": "revisions",
@@ -59,15 +60,12 @@ bot.request({
       })
       .then(parsed => {  
         parsed.query.pages.forEach((revcon)=>{
-        /*console.log(revcon)
-        var redirtitle = console.log(pagemembers)//.redirects[0]).title.split(":")[1]
-        console.log(revcon)
+        var redirtitle = pagemembers[revcon.title].redirects[0].title.split(":")[1]
+        console.log(redirtitle)
         var locatestring2 = /{{Old peer review/
         var locatestring = /{{oldpeerreview/
         var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle
         var formtext = revcon.revisions[0].slots.main.content
-        
-        //console.log(wikitext,formtext)
         bot.edit(revcon.title, rev => {
           // rev.content gives the revision text
           // rev.timestamp gives the revision timestamp
@@ -83,11 +81,9 @@ bot.request({
           .then((data)=>{
             console.log(data)
           })
-          .catch((bbb)=>{
-            console.log(bbb)
-        
-
-        });*/
+          .catch((errortext)=>{
+            console.log(errortext)
+          });
       })
       })
   });
