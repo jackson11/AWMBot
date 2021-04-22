@@ -6,12 +6,25 @@ function pluck(array, key) {
   return array.map(o => o[key]);
 }
 
-const bot = new mwn({
-    apiUrl: 'https://en.wikipedia.org/w/api.php',
-    username: username,
-    password: password
-});
+function getParamsFromTextWithMatch(string,look,rep){
+  var splitstring = string.split("\n")
+  for (let i = 0;i<splitstring.length;i++){
+    var returnstring = ""
+    if (look.test(splitstring[i])){
+      splitstring[i]=rep
+      //{{Old peer review|reviewedname=ewokfp|archive=1}}
+      return splitstring.join("\n")
+    }else{
+      return false
+    }
+  }
+}   
 
+const bot = new mwn({
+  apiUrl: 'https://en.wikipedia.org/w/api.php',
+  username: "AWMBot",
+  password: "AWMBot@tev20kclgqbqtso0qt5u21jajrctn89v"
+});
 
 bot.loginGetToken()
   .then((data)=>{
@@ -31,7 +44,7 @@ bot.request({
 	"action": "query",
 	"list": "categorymembers",
   "cmtitle":"Category:Pages_using_Template:Old_peer_review_with_broken_archive_link",
-  "cmlimit": "10",
+  "cmlimit": "50",
 	"cmprop": "ids|title|type",
 }).then(data => {
 	bot.request({
@@ -59,21 +72,23 @@ bot.request({
         "pageids": ids
       })
       .then(parsed => {  
+        //console.log(parsed)
         parsed.query.pages.forEach((revcon)=>{
         var redirtitle = pagemembers[revcon.title].redirects[0].title.split(":")[1]
         console.log(redirtitle)
-        var locatestring2 = /{{Old peer review/
-        var locatestring = /{{oldpeerreview/
-        var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle
+        var locatestring = /{{oldpeerreview|{{Old peer review/
+        var hasparam = /reviewedname=/
+        var replacestring = "{{Old peer review|"+"reviewedname="+redirtitle+"|archive=1}}"
         var formtext = revcon.revisions[0].slots.main.content
         bot.edit(revcon.title, rev => {
-          // rev.content gives the revision text
-          // rev.timestamp gives the revision timestamp
-          var wikitext = rev.content.replace(locatestring,replacestring).replace(locatestring2,replacestring)
-
+          
+          var wikitext = getParamsFromTextWithMatch(rev.content,locatestring,replacestring) || false
+          if (!wikitext){
+            return
+          }
           return {  // return parameters needed for [[mw:API:Edit]]
             text: wikitext,
-            summary: 'Fixing broken old peer review link.',
+            summary: '(BOT) Fixing broken old peer review link.',
             minor: true,
             bot: true
           }
